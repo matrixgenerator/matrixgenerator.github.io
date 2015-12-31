@@ -160,15 +160,6 @@
 				return res;
 			}
 			
-			function xchMatrix(size1,idx1,idx2) {
-				var res = identityMatrix(size1);
-				res[idx1][idx1] = 0;
-				res[idx2][idx2] = 0;
-				res[idx1][idx2] = 1;
-				res[idx2][idx1] = 1;
-				return res;
-			}
-			
 			function addmulInverse(size1,dir,idx1,idx2,mul1,mul2) {
 				var res = identityMatrix(size1);
 				if(dir = 0) {
@@ -182,16 +173,8 @@
 				return res;
 			}
 			
-			function xchInverse(size1,idx1,idx2) {
-				return xchMatrix(size1,idx1,idx2);
-			}
-			
 			function addmulDeterminant(mul2) {
 				return mul2;
-			}
-			
-			function xchDeterminant() {
-				return -1;
 			}
 			
 			function randomInt(count) {
@@ -299,60 +282,36 @@
 				if(isNaN(ctx.size) || ctx.size < 2) ctx.size = 3;
 				
 				ctx.list = [];
-				forUpto(ctx.size,function(i) { // TODO improve
-					forUpto(ctx.size,function(j) {
-						var idx = ctx.list.length;
-						ctx.list[idx] = [];
-						forUpto(2,function(k) {
-							if(randomProb(0.5)) {
-								var idx1 = randomInt(ctx.size);
-								var idx2 = randomInt(ctx.size - 1);
-								if(idx2 >= idx1)
-									idx2++;
-								var mul1 = [1,1,2,3][randomInt(4)];
-								if(randomProb(0.5))
-									mul1 = -mul1;
-								var mul2 = [1,1,2,3][randomInt(4)];
-								if(randomProb(0.5))
-									mul2 = -mul2;
-								ctx.list[idx][k] = {
-									mat: addmulMatrix(ctx.size,k,idx1,idx2,mul1,mul2),
-									inv: addmulInverse(ctx.size,k,idx1,idx2,mul1,mul2),
-									det: addmulDeterminant(mul2),
-								};
-							}
-							else {
-								ctx.list[idx][k] = {
-									mat: identityMatrix(ctx.size),
-									inv: identityMatrix(ctx.size),
-									det: 1,
-								};
-							}
+				forUpto(2,function(i) { // TODO improve
+					forUpto(ctx.size - 1,function(j) {
+						forUpto([j + 1,ctx.size - 1 - j][i],function(k) {
+							var idx = ctx.list.length;
+							ctx.list[idx] = [];
+							forUpto(2,function(l) {
+								if(randomProb(0.5)) {
+									var idx1 = [j + 1,j][i];
+									var idx2 = [k,j + 1 + k][i];
+									var mul1 = [1,1,2,3][randomInt(4)];
+									if(randomProb(0.5))
+										mul1 = -mul1;
+									var mul2 = [1,1,2,3][randomInt(4)];
+									if(randomProb(0.5))
+										mul2 = -mul2;
+									ctx.list[idx][l] = {
+										mat: addmulMatrix(ctx.size,l,idx1,idx2,mul1,mul2),
+										inv: addmulInverse(ctx.size,l,idx1,idx2,mul1,mul2),
+										det: addmulDeterminant(mul2),
+									};
+								}
+								else {
+									ctx.list[idx][l] = {
+										mat: identityMatrix(ctx.size),
+										inv: identityMatrix(ctx.size),
+										det: 1,
+									};
+								}
+							});
 						});
-					});
-				});
-				forUpto(ctx.size,function(i) {
-					var idx = ctx.list.length;
-					ctx.list[idx] = [];
-					forUpto(2,function(k) {
-						if(randomProb(0.5)) {
-							var idx1 = randomInt(ctx.size);
-							var idx2 = randomInt(ctx.size - 1);
-							if(idx2 >= idx1)
-								idx2++;
-							ctx.list[idx][k] = {
-								mat: xchMatrix(ctx.size,idx1,idx2),
-								inv: xchMatrix(ctx.size,idx1,idx2),
-								det: xchDeterminant(),
-							};
-						}
-						else {
-							ctx.list[idx][k] = {
-								mat: identityMatrix(ctx.size),
-								inv: identityMatrix(ctx.size),
-								det: 1,
-							};
-						}
 					});
 				});
 				
