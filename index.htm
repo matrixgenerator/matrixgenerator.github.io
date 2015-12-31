@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<title>Matrix Generator</title>
+		<link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?">
+	</head>
+	<body style="font-family:sans-serif;font-size:small;">
+		<div>Matrix Generator</div>
+		<div><br></div>
+		<div>
+			1.
+			&emsp;
+			Size:
+			<input id="paramSize" type="text" value="3" style="width:5em;">
+		</div>
+		<div><br></div>
+		<div>
+			2.
+			&emsp;
+			Generate:
+			&emsp;
+			<a href="javascript:void(0);" onclick="generateMatrix(1);">Find inverse matrix</a>
+			&emsp;
+			<a href="javascript:void(0);" onclick="generateMatrix(2);">Try to invert matrix</a>
+			&emsp;
+			<a href="javascript:void(0);" onclick="generateMatrix(3);">Find determinant</a>
+			&emsp;
+			<a href="javascript:void(0);" onclick="generateMatrix(4);">Find SLE solution</a>
+			&emsp;
+			<a href="javascript:void(0);" onclick="generateMatrix(5);">Try to solve SLE</a>
+		</div>
+		<div><br></div>
+		<div>
+			3.
+			&emsp;
+			Solve:
+		</div>
+		<div><br></div>
+		<div id="output1"></div>
+		<div><br></div>
+		<div>
+			4.
+			&emsp;
+			Export:
+			&emsp;
+			<a href="javascript:void(0);" onclick="return exportMatrix(this,1,1);" download="matrix.java">Java</a>
+			&emsp;
+			<a href="javascript:void(0);" onclick="return exportMatrix(this,1,2);" download="matrix.c">C/C++</a>
+			&emsp;
+			<a href="javascript:void(0);" onclick="return exportMatrix(this,1,3);" download="matrix.tex">LaTeX</a>
+			&emsp;
+			<a href="javascript:void(0);" onclick="return exportMatrix(this,1,4);" download="matrix.m">Matlab</a>
+			&emsp;
+			<a href="javascript:void(0);" onclick="return exportMatrix(this,1,5);" download="matrix.json">JSON</a>
+		</div>
+		<div><br></div>
+		<div>
+			5.
+			&emsp;
+			<a href="javascript:void(0);" onclick="checkSolution();">Check solution</a>
+		</div>
+		<div><br></div>
+		<div><br></div>
+		<div>
+			6.
+			&emsp;
+			<a href="javascript:void(0);" onclick="showSolution();">Show solution</a>
+		</div>
+		<div><br></div>
+		<div>
+			7.
+			&emsp;
+			Solution:
+		</div>
+		<div><br></div>
+		<div id="output2"></div>
+		<div><br></div>
+		<div>
+			8.
+			&emsp;
+			Export:
+			&emsp;
+			<a href="javascript:void(0);" onclick="return exportMatrix(this,2,1);" download="matrix.java">Java</a>
+			&emsp;
+			<a href="javascript:void(0);" onclick="return exportMatrix(this,2,2);" download="matrix.c">C/C++</a>
+			&emsp;
+			<a href="javascript:void(0);" onclick="return exportMatrix(this,2,3);" download="matrix.tex">LaTeX</a>
+			&emsp;
+			<a href="javascript:void(0);" onclick="return exportMatrix(this,2,4);" download="matrix.m">Matlab</a>
+			&emsp;
+			<a href="javascript:void(0);" onclick="return exportMatrix(this,2,5);" download="matrix.json">JSON</a>
+		</div>
+		<div><br></div>
+		<script type="text/javascript">
+			var ctx = {
+				size: null,
+				sel1: null,
+				list: null,
+				mat1: null,
+				sol1: null,
+				mat2: null,
+				sol2: null,
+				has2: null,
+			};
+			
+			function forUpto(count,func) {
+				for(var i = 0; i < count; ++i)
+					func(i);
+			}
+			
+			function matrixProduct(mat3,mat4,size1,size2) {
+				var res = [];
+				forUpto(size1,function(i) {
+					res[i] = [];
+					forUpto(size2,function(j) {
+						res[i][j] = 0;
+						forUpto(size1,function(k) {
+							res[i][j] += mat3[i][k] * mat4[k][j];
+						});
+					});
+				});
+				return res;
+			}
+			
+			function linearMapping(mat3,vec1,size1) {
+				var mat4 = [];
+				forUpto(size1,function(i) {
+					mat4[i] = [vec1[i]];
+				});
+				var mat5 = matrixProduct(mat3,mat4,size1,1);
+				var res = [];
+				forUpto(size1,function(i) {
+					res[i] = mat5[i][0];
+				});
+				return res;
+			}
+			
+			function identityMatrix(size1) {
+				var res = [];
+				forUpto(size1,function(i) {
+					res[i] = [];
+					forUpto(size1,function(j) {
+						res[i][j] = (i == j) ? 1 : 0;
+					});
+				});
+				return res;
+			}
+			
+			function addmulMatrix(size1,dir,idx1,idx2,mul1,mul2) {
+				var res = identityMatrix(size1);
+				if(dir = 0) {
+					res[idx2][idx1] = mul1;
+					res[idx2][idx2] = mul2;
+				}
+				else {
+					res[idx1][idx2] = mul1;
+					res[idx2][idx2] = mul2;
+				}
+				return res;
+			}
+			
+			function xchMatrix(size1,idx1,idx2) {
+				var res = identityMatrix(size1);
+				res[idx1][idx1] = 0;
+				res[idx2][idx2] = 0;
+				res[idx1][idx2] = 1;
+				res[idx2][idx1] = 1;
+				return res;
+			}
+			
+			function addmulInverse(size1,dir,idx1,idx2,mul1,mul2) {
+				var res = identityMatrix(size1);
+				if(dir = 0) {
+					res[idx2][idx1] = -mul1 / mul2;
+					res[idx2][idx2] = 1 / mul2;
+				}
+				else {
+					res[idx1][idx2] = -mul1 / mul2;
+					res[idx2][idx2] = 1 / mul2;
+				}
+				return res;
+			}
+			
+			function xchInverse(size1,idx1,idx2) {
+				return xchMatrix(size1,idx1,idx2);
+			}
+			
+			function addmulDeterminant(mul2) {
+				return mul2;
+			}
+			
+			function xchDeterminant() {
+				return -1;
+			}
+			
+			function randomInt(count) {
+				return Math.floor(Math.random() * count);
+			}
+			
+			function randomProb(prob) {
+				return Math.random() < prob;
+			}
+			
+			function printResult() {
+				var text1 = [
+					null,
+					"Find inverse matrix",
+					"Try to invert matrix",
+					"Find determinant",
+					"Find SLE solution",
+					"Try to solve SLE",
+				];
+				var html = "<div>\"" + text1[ctx.sel1] + "\"</div><div><table><tr><td><table>";
+				forUpto(ctx.size,function(i) {
+					html += "<tr>";
+					forUpto(ctx.size,function(j) {
+						html += "<td style=\"text-align:right;\">" + ctx.mat1[i][j] + "</td>";
+					});
+					html += "</tr>";
+				});
+				html += "</table></td>";
+				if(ctx.sel1 == 4 || ctx.sel1 == 5) {
+					html += "<td><table style=\"border-left:1px solid #000;\">";
+					forUpto(ctx.size,function(i) {
+						html += "<tr><td style=\"text-align:right;\">" + ctx.sol1[i] + "</td></tr>";
+					});
+					html += "</table></td>";
+				}
+				html += "<td>&emsp;</td><td><table>";
+				if(ctx.sel1 == 1 || ctx.sel1 == 2) {
+					forUpto(ctx.size,function(i) {
+						html += "<tr>";
+						forUpto(ctx.size,function(j) {
+							html += "<td><input id=\"inputMat_" + i + "_" + j + "\" type=\"text\" value=\"0\" style=\"width:5em;\"></td>";
+						});
+						html += "</tr>";
+					});
+				}
+				else if(ctx.sel1 == 3) {
+					html += "<tr><td><input id=\"inputMat_0_0\" type=\"text\" value=\"0\" style=\"width:5em;\"></td></tr>";
+				}
+				else if(ctx.sel1 == 4 || ctx.sel1 == 5) {
+					forUpto(ctx.size,function(i) {
+						html += "<tr><td><input id=\"inputMat_" + i + "_0\" type=\"text\" value=\"0\" style=\"width:5em;\"></td></tr>";
+					});
+				}
+				html += "</table></td>";
+				if(ctx.sel1 == 2) {
+					html += "<td><input id=\"inputCheck\" type=\"checkbox\" checked=\"checked\"><label for=\"inputCheck\">Has inverse</label></td>";
+				}
+				else if(ctx.sel1 == 5) {
+					html += "<td><input id=\"inputCheck\" type=\"checkbox\" checked=\"checked\"><label for=\"inputCheck\">Has solution</label></td>";
+				}
+				html += "</tr></table></div>";
+				return html;
+			}
+			
+			function printSolution() {
+				var html = "<table><tr>";
+				if(ctx.sel1 == 1 || ctx.sel1 == 2) {
+					if(!ctx.has2) {
+						html += "<td>Does not have inverse</td>";
+					}
+					else {
+						html += "<td><table>";
+						forUpto(ctx.size,function(i) {
+							html += "<tr>";
+							forUpto(ctx.size,function(j) {
+								html += "<td style=\"text-align:right;\">" + Math.round(ctx.mat2[i][j] * 100) / 100 + "</td>";
+							});
+							html += "</tr>";
+						});
+						html += "</table></td>";
+					}
+				}
+				else if(ctx.sel1 == 3) {
+					html += "<td>Determinant: " + Math.round(ctx.sol2[0] * 100) / 100 + "</td>";
+				}
+				else if(ctx.sel1 == 4 || ctx.sel1 == 5) {
+					if(!ctx.has2) {
+						html += "<td>Does not have solution</td>";
+					}
+					else {
+						html += "<td><table>";
+						forUpto(ctx.size,function(i) {
+							html += "<tr><td style=\"text-align:right;\">" + Math.round(ctx.sol2[i] * 100) / 100 + "</td></tr>";
+						});
+						html += "</table></td>";
+					}
+				}
+				html += "</tr></table>";
+				return html;
+			}
+			
+			function generateMatrix(sel1) {
+				ctx.sel1 = sel1;
+				ctx.size = parseInt(document.getElementById("paramSize").value);
+				if(isNaN(ctx.size) || ctx.size < 2) ctx.size = 3;
+				
+				ctx.list = [];
+				forUpto(ctx.size,function(i) { // TODO improve
+					forUpto(ctx.size,function(j) {
+						var idx = ctx.list.length;
+						ctx.list[idx] = [];
+						forUpto(2,function(k) {
+							if(randomProb(0.5)) {
+								var idx1 = randomInt(ctx.size);
+								var idx2 = randomInt(ctx.size - 1);
+								if(idx2 >= idx1)
+									idx2++;
+								var mul1 = [1,1,2,3][randomInt(4)];
+								if(randomProb(0.5))
+									mul1 = -mul1;
+								var mul2 = [1,1,2,3][randomInt(4)];
+								if(randomProb(0.5))
+									mul2 = -mul2;
+								ctx.list[idx][k] = {
+									mat: addmulMatrix(ctx.size,k,idx1,idx2,mul1,mul2),
+									inv: addmulInverse(ctx.size,k,idx1,idx2,mul1,mul2),
+									det: addmulDeterminant(mul2),
+								};
+							}
+							else {
+								ctx.list[idx][k] = {
+									mat: identityMatrix(ctx.size),
+									inv: identityMatrix(ctx.size),
+									det: 1,
+								};
+							}
+						});
+					});
+				});
+				forUpto(ctx.size,function(i) {
+					var idx = ctx.list.length;
+					ctx.list[idx] = [];
+					forUpto(2,function(k) {
+						if(randomProb(0.5)) {
+							var idx1 = randomInt(ctx.size);
+							var idx2 = randomInt(ctx.size - 1);
+							if(idx2 >= idx1)
+								idx2++;
+							ctx.list[idx][k] = {
+								mat: xchMatrix(ctx.size,idx1,idx2),
+								inv: xchMatrix(ctx.size,idx1,idx2),
+								det: xchDeterminant(),
+							};
+						}
+						else {
+							ctx.list[idx][k] = {
+								mat: identityMatrix(ctx.size),
+								inv: identityMatrix(ctx.size),
+								det: 1,
+							};
+						}
+					});
+				});
+				
+				ctx.mat1 = identityMatrix(ctx.size);
+				ctx.mat2 = identityMatrix(ctx.size);
+				ctx.sol1 = [];
+				ctx.sol2 = [];
+				ctx.has2 = true;
+				ctx.sol2[0] = 1;
+				if(ctx.sel1 == 2 || ctx.sel1 == 5) {
+					if(randomProb(0.5)) {
+						ctx.has2 = false;
+						ctx.mat1[0][0] = 0;
+						ctx.mat2[0][0] = 0;
+					}
+				}
+				else if(ctx.sel1 == 3) {
+					if(randomProb(0.25)) {
+						ctx.has2 = false;
+						ctx.mat1[0][0] = 0;
+						ctx.mat2[0][0] = 0;
+						ctx.sol2[0] = 0;
+					}
+				}
+				forUpto(ctx.list.length,function(i) {
+					ctx.mat1 = matrixProduct(ctx.list[i][0].mat,ctx.mat1,ctx.size,ctx.size);
+					ctx.mat1 = matrixProduct(ctx.mat1,ctx.list[i][1].mat,ctx.size,ctx.size);
+					ctx.mat2 = matrixProduct(ctx.mat2,ctx.list[i][0].inv,ctx.size,ctx.size);
+					ctx.mat2 = matrixProduct(ctx.list[i][1].inv,ctx.mat2,ctx.size,ctx.size);
+					if(ctx.sel1 == 3) {
+						ctx.sol2[0] *= ctx.list[i][0].det;
+						ctx.sol2[0] *= ctx.list[i][1].det;
+					}
+				});
+				if(ctx.sel1 == 4 || ctx.sel1 == 5) {
+					forUpto(ctx.size,function(i) {
+						ctx.sol1[i] = randomInt(9) + 1;
+						if(randomProb(0.5))
+							ctx.sol1[i] = -ctx.sol1[i];
+					});
+					ctx.sol2 = linearMapping(ctx.mat2,ctx.sol1,ctx.size);
+				}
+				
+				document.getElementById("output1").innerHTML = printResult();
+				document.getElementById("output2").innerHTML = "";
+			}
+			
+			function parseValue(text) {
+				var res = 0;
+				text = text.replace(/,/g, ".")
+				var pos = text.indexOf("/");
+				if(pos != -1) {
+					res = parseFloat(text.substring(0,pos)) / parseFloat(text.substring(pos + 1));
+				}
+				else {
+					res = parseFloat(text);
+				}
+				return res;
+			}
+			
+			function checkSolution() {
+				if(!ctx.sel1) return false;
+				
+				var correct = true;
+				if(ctx.sel1 == 1 || ctx.sel1 == 2) {
+					if(ctx.sel1 == 2) {
+						var has3 = document.getElementById("inputCheck").checked;
+						if(ctx.has2 != has3)
+							correct = false;
+					}
+					if(ctx.has2) {
+						forUpto(ctx.size,function(i) {
+							forUpto(ctx.size,function(j) {
+								var mat3 = parseValue(document.getElementById("inputMat_" + i + "_" + j).value);
+								if(mat3 > ctx.mat2[i][j] + 0.02 || mat3 < ctx.mat2[i][j] - 0.02)
+									correct = false;
+							});
+						});
+					}
+				}
+				else if(ctx.sel1 == 3) {
+					var sol3 = parseValue(document.getElementById("inputMat_0_0").value);
+					if(sol3 > ctx.sol2[0] + 0.02 || sol3 < ctx.sol2[0] - 0.02)
+						correct = false;
+				}
+				else if(ctx.sel1 == 4 || ctx.sel1 == 5) {
+					if(ctx.sel1 == 5) {
+						var has3 = document.getElementById("inputCheck").checked;
+						if(ctx.has2 != has3)
+							correct = false;
+					}
+					if(ctx.has2) {
+						forUpto(ctx.size,function(i) {
+							var sol3 = parseValue(document.getElementById("inputMat_" + i + "_0").value);
+							if(sol3 > ctx.sol2[i] + 0.02 || sol3 < ctx.sol2[i] - 0.02)
+								correct = false;
+						});
+					}
+				}
+				
+				if(correct) {
+					alert("Your solution is correct !");
+				}
+				else {
+					alert("Your solution is wrong :(");
+				}
+			}
+			
+			function showSolution() {
+				if(!ctx.sel1) return false;
+				document.getElementById("output2").innerHTML = printSolution();
+			}
+			
+			function exportMatrix(el,sel2,sel3) {
+				if(!ctx.sel1) return false;
+				if(sel2 == 2 && ctx.sel1 == 3) return false;
+				if(sel2 == 2 && !ctx.has2) return false;
+				
+				var mat4 = [null,ctx.mat1,ctx.mat2][sel2];
+				var sol4 = [null,ctx.sol1,ctx.sol2][sel2];
+				
+				var text = "";
+				if(sel3 == 1) {
+					var name = "";
+					if(sel2 == 1 || ctx.sel1 == 1 || ctx.sel1 == 2) {
+						name = [null,"matrix","solution"][sel2];
+						text += "static double[][] " + name + " = new double[][] {\n";
+						forUpto(ctx.size,function(i) {
+							if(i) text += ",\n";
+							text += "\tnew double[] {";
+							forUpto(ctx.size,function(j) {
+								if(j) text += ",";
+								text += mat4[i][j];
+							});
+							if(ctx.sel1 == 4 || ctx.sel1 == 5) {
+								text += "," + sol4[i];
+							}
+							text += "}";
+						});
+						text += "\n};\n";
+					}
+					else if(ctx.sel1 == 4 || ctx.sel1 == 5) {
+						name = "solution";
+						text += "static double[] " + name + " = new double[] {";
+						forUpto(ctx.size,function(i) {
+							if(i) text += ",";
+							text += sol4[i];
+						});
+						text += "};\n";
+					}
+				}
+				else if(sel3 == 2) {
+					var name = "";
+					if(sel2 == 1 || ctx.sel1 == 1 || ctx.sel1 == 2) {
+						name = [null,"matrix","solution"][sel2];
+						text += "double " + name + "[" + ctx.size + "][" + ctx.size + "] = {\n";
+						forUpto(ctx.size,function(i) {
+							if(i) text += ",\n";
+							text += "\t{";
+							forUpto(ctx.size,function(j) {
+								if(j) text += ",";
+								text += mat4[i][j];
+							});
+							if(ctx.sel1 == 4 || ctx.sel1 == 5) {
+								text += "," + sol4[i];
+							}
+							text += "}";
+						});
+						text += "\n};";
+					}
+					else if(ctx.sel1 == 4 || ctx.sel1 == 5) {
+						name = "solution";
+						text += "double " + name + "[" + ctx.size + "] = {\n";
+						forUpto(ctx.size,function(i) {
+							if(i) text += ",";
+							text += sol4[i];
+						});
+						text += "};";
+					}
+				}
+				else if(sel3 == 3) {
+					text += "\\begin{pmatrix*}[r]\n";
+					if(sel2 == 1 || ctx.sel1 == 1 || ctx.sel1 == 2) {
+						forUpto(ctx.size,function(i) {
+							if(i) text += " \\\\\n";
+							text += "\t";
+							forUpto(ctx.size,function(j) {
+								if(j) text += " & ";
+								text += mat4[i][j];
+							});
+							if(ctx.sel1 == 4 || ctx.sel1 == 5) {
+								text += " & " + sol4[i];
+							}
+						});
+					}
+					else if(ctx.sel1 == 4 || ctx.sel1 == 5) {
+						forUpto(ctx.size,function(i) {
+							if(i) text += " \\\\\n";
+							text += "\t" + sol4[i];
+						});
+					}
+					text += "\n\\end{pmatrix*}";
+				}
+				else if(sel3 == 4) {
+					text += "[";
+					if(sel2 == 1 || ctx.sel1 == 1 || ctx.sel1 == 2) {
+						forUpto(ctx.size,function(i) {
+							if(i) text += ";";
+							forUpto(ctx.size,function(j) {
+								if(j) text += " ";
+								text += mat4[i][j];
+							});
+							if(ctx.sel1 == 4 || ctx.sel1 == 5) {
+								text += " " + sol4[i];
+							}
+						});
+					}
+					else if(ctx.sel1 == 4 || ctx.sel1 == 5) {
+						forUpto(ctx.size,function(i) {
+							if(i) text += " ";
+							text += sol4[i];
+						});
+					}
+					text += "]";
+				}
+				else if(sel3 == 5) {
+					if(sel2 == 1 || ctx.sel1 == 1 || ctx.sel1 == 2) {
+						text += "[\n";
+						forUpto(ctx.size,function(i) {
+							if(i) text += ",\n";
+							text += "\t[";
+							forUpto(ctx.size,function(j) {
+								if(j) text += ",";
+								text += mat4[i][j];
+							});
+							if(ctx.sel1 == 4 || ctx.sel1 == 5) {
+								text += "," + sol4[i];
+							}
+							text += "]";
+						});
+						text += "\n]";
+					}
+					else if(ctx.sel1 == 4 || ctx.sel1 == 5) {
+						text += "[";
+						forUpto(ctx.size,function(i) {
+							if(i) text += ",";
+							text += sol4[i];
+						});
+						text += "]";
+					}
+				}
+				
+				el.href = "";
+				if(!confirm("Select and copy:\n\n" + text + "\n\nDo you want to download as file?"))
+					return false;
+				
+				el.href = "data:text/plain," + encodeURIComponent(text);
+				return true;
+			}
+		</script>
+	</body>
+</html>
