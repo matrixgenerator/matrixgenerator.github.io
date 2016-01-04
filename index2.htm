@@ -288,26 +288,28 @@
 							var idx = ctx.list.length;
 							ctx.list[idx] = [];
 							forUpto(2,function(l) {
-								var idx1 = [j + 1,j][i];
-								var idx2 = [k,j + 1 + k][i];
-								var mul1 = [1,1,1,2][randomInt(4)];
-								if(randomProb(0.5))
-									mul1 = -mul1;
-								var mul2 = [1,1,2,3][randomInt(4)];
-								if(randomProb(0.5))
-									mul2 = -mul2;
-								if(randomProb(1 - 2 / ctx.size)) {
-									mul1 = 0;
-									mul2 = 1;
+								if(randomProb(0.5)) {
+									var idx1 = [j + 1,j][i];
+									var idx2 = [k,j + 1 + k][i];
+									var mul1 = [1,1,2,3][randomInt(4)];
+									if(randomProb(0.5))
+										mul1 = -mul1;
+									var mul2 = [1,1,2,3][randomInt(4)];
+									if(randomProb(0.5))
+										mul2 = -mul2;
+									ctx.list[idx][l] = {
+										mat: addmulMatrix(ctx.size,l,idx1,idx2,mul1,mul2),
+										inv: addmulInverse(ctx.size,l,idx1,idx2,mul1,mul2),
+										det: addmulDeterminant(mul2),
+									};
 								}
-								if(ctx.sel1 == 3 && randomProb(0.75)) {
-									mul2 = 1;
+								else {
+									ctx.list[idx][l] = {
+										mat: identityMatrix(ctx.size),
+										inv: identityMatrix(ctx.size),
+										det: 1,
+									};
 								}
-								ctx.list[idx][l] = {
-									mat: addmulMatrix(ctx.size,l,idx1,idx2,mul1,mul2),
-									inv: addmulInverse(ctx.size,l,idx1,idx2,mul1,mul2),
-									det: addmulDeterminant(mul2),
-								};
 							});
 						});
 					});
@@ -336,16 +338,6 @@
 					if(ctx.sel1 == 3) { // find determinant
 						ctx.sol2[0] *= ctx.list[i][0].det;
 						ctx.sol2[0] *= ctx.list[i][1].det;
-					}
-				});
-				forUpto(ctx.size,function(i) {
-					if(randomProb(0.5)) {
-						ctx.mat1 = matrixProduct(addmulMatrix(ctx.size,0,i,ctx.size - i - 1,1,1),ctx.mat1,ctx.size,ctx.size);
-						ctx.mat2 = matrixProduct(ctx.mat2,addmulInverse(ctx.size,0,i,ctx.size - i - 1,1,1),ctx.size,ctx.size);
-					}
-					if(randomProb(0.5)) {
-						ctx.mat1 = matrixProduct(ctx.mat1,addmulMatrix(ctx.size,1,i,ctx.size - i - 1,1,1),ctx.size,ctx.size);
-						ctx.mat2 = matrixProduct(addmulInverse(ctx.size,1,i,ctx.size - i - 1,1,1),ctx.mat2,ctx.size,ctx.size);
 					}
 				});
 				if(ctx.sel1 == 4 || ctx.sel1 == 5) {
