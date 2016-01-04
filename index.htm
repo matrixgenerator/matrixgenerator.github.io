@@ -387,17 +387,25 @@
 					if(ctx.has2) {
 						forUpto(ctx.size,function(i) {
 							forUpto(ctx.size,function(j) {
-								var mat3 = parseValue(document.getElementById("inputMat_" + i + "_" + j).value);
-								if(mat3 > ctx.mat2[i][j] + 0.02 || mat3 < ctx.mat2[i][j] - 0.02)
+								var el = document.getElementById("inputMat_" + i + "_" + j);
+								el.style.backgroundColor = null;
+								var val = parseValue(el.value);
+								if(val > ctx.mat2[i][j] + 0.02 || val < ctx.mat2[i][j] - 0.02) {
 									correct = false;
+									el.style.backgroundColor = "#f99";
+								}
 							});
 						});
 					}
 				}
 				else if(ctx.sel1 == 3) { // find determinant
-					var sol3 = parseValue(document.getElementById("inputMat_0_0").value);
-					if(sol3 > ctx.sol2[0] + 0.02 || sol3 < ctx.sol2[0] - 0.02)
+					var el = document.getElementById("inputMat_0_0");
+					el.style.backgroundColor = null;
+					var val = parseValue(el.value);
+					if(val > ctx.sol2[0] + 0.02 || val < ctx.sol2[0] - 0.02) {
 						correct = false;
+						el.style.backgroundColor = "#f99";
+					}
 				}
 				else if(ctx.sel1 == 4 || ctx.sel1 == 5) { // solve SLE
 					if(ctx.sel1 == 5) { // try to solve
@@ -407,9 +415,13 @@
 					}
 					if(ctx.has2) {
 						forUpto(ctx.size,function(i) {
-							var sol3 = parseValue(document.getElementById("inputMat_" + i + "_0").value);
-							if(sol3 > ctx.sol2[i] + 0.02 || sol3 < ctx.sol2[i] - 0.02)
+							var el = document.getElementById("inputMat_" + i + "_0");
+							el.style.backgroundColor = null;
+							var val = parseValue(el.value);
+							if(val > ctx.sol2[i] + 0.02 || val < ctx.sol2[i] - 0.02) {
 								correct = false;
+								el.style.backgroundColor = "#f99";
+							}
 						});
 					}
 				}
