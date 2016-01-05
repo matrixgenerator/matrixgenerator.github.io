@@ -291,18 +291,18 @@
 								var idx1 = [j + 1,j][i];
 								var idx2 = [k,j + 1 + k][i];
 								var mul1 = [1,1,1,2][randomInt(4)];
-								if(randomProb(0.5))
-									mul1 = -mul1;
 								var mul2 = [1,1,2,3][randomInt(4)];
-								if(randomProb(0.5))
-									mul2 = -mul2;
 								if(randomProb(1 - 2 / ctx.size)) {
 									mul1 = 0;
 									mul2 = 1;
 								}
-								if(ctx.sel1 == 3 && randomProb(0.75)) {
+								if(randomProb(0.75)) {
 									mul2 = 1;
 								}
+								if(randomProb(0.5))
+									mul1 = -mul1;
+								if(randomProb(0.5))
+									mul2 = -mul2;
 								ctx.list[idx][l] = {
 									mat: addmulMatrix(ctx.size,l,idx1,idx2,mul1,mul2),
 									inv: addmulInverse(ctx.size,l,idx1,idx2,mul1,mul2),
